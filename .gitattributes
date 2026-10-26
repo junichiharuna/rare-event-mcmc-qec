@@ -1,0 +1,4 @@
+# Shell scripts run on the Linux cluster; a CRLF working copy breaks bash -n
+# prechecks locally (WSL bash) and would break execution if ever copied raw.
+*.sh text eol=lf
+paper/tables/*.tex text eol=lf

@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this code or data, please cite the paper and the Zenodo record of the version you used."
+type: software
+title: "rare-event-mcmc-qec: rare-event Markov chain Monte Carlo for logical error statistics of quantum codes"
+version: "1.0.0"
+date-released: "2026-10-26"
+license: MIT
+repository-code: "https://github.com/junichiharuna/rare-event-mcmc-qec"
+authors:
+  - family-names: Haruna
+    given-names: Junichi
+    orcid: "https://orcid.org/0000-0002-1828-8183"
+    affiliation: "Graduate School of Informatics, Kyoto University; Center for Quantum Information and Quantum Biology, University of Osaka"
+  - family-names: Murakami
+    given-names: Kotaro
+    orcid: "https://orcid.org/0000-0001-8922-4411"
+    affiliation: "Department of Physics, Institute of Science Tokyo; RIKEN Center for Interdisciplinary Theoretical and Mathematical Sciences (iTHEMS)"
+preferred-citation:
+  type: article
+  title: "Fast and accurate rare-event simulation by Markov chain Monte Carlo for general quantum codes"
+  authors:
+    - family-names: Haruna
+      given-names: Junichi
+      orcid: "https://orcid.org/0000-0002-1828-8183"
+    - family-names: Murakami
+      given-names: Kotaro
+      orcid: "https://orcid.org/0000-0001-8922-4411"
+  year: 2026
+  status: in-preparation

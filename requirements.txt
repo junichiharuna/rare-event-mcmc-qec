@@ -1,0 +1,12 @@
+numpy>=1.26.4
+pymatching>=2.2.1
+ldpc>=2.3.9
+bposd>=2.1
+scipy>=1.13.0
+matplotlib>=3.9.0
+pandas>=2.0.0
+pymbar>=4.0
+
+# dev / testing
+pytest>=8.0
+pytest-xdist>=3.0  # parallel test execution: pytest -n auto

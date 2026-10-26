@@ -1,0 +1,15 @@
+{
+  "upload_type": "software",
+  "title": "rare-event-mcmc-qec: rare-event Markov chain Monte Carlo for logical error statistics of quantum codes",
+  "description": "<p>Code, cluster job scripts, simulation outputs, and reference estimates for the paper <em>Fast and accurate rare-event simulation by Markov chain Monte Carlo for general quantum codes</em> by Junichi Haruna and Kotaro Murakami. The repository contains the MCMC sampler kernels studied in the paper (the one-bit-flip baseline and the proposed kernel with locally balanced flips and a weight-preserving cluster exchange), the MCMC-independent reference estimators, the PBS job scripts that produced every simulation output, those outputs as CSV, and the scripts that regenerate every table and figure of the paper from them (<code>python reproduce.py --check</code>).</p>",
+  "creators": [
+    {"name": "Haruna, Junichi", "affiliation": "Kyoto University; University of Osaka", "orcid": "0000-0002-1828-8183"},
+    {"name": "Murakami, Kotaro", "affiliation": "Institute of Science Tokyo; RIKEN iTHEMS", "orcid": "0000-0001-8922-4411"}
+  ],
+  "license": "mit",
+  "keywords": ["quantum error correction", "rare-event sampling", "Markov chain Monte Carlo", "splitting method", "logical error rate", "quantum LDPC codes"],
+  "related_identifiers": [
+    {"identifier": "https://github.com/junichiharuna/mcmc4qec", "relation": "isSupplementedBy", "resource_type": "software", "scheme": "url"}
+  ],
+  "version": "1.0.0"
+}

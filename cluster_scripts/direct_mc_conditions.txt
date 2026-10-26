@@ -1,0 +1,14 @@
+bit_flip toric 5 0.01 1000 100000000
+bit_flip toric 5 0.001 500 10000000000
+bit_flip toric 7 0.01 1000 1000000000
+bit_flip toric 9 0.01 500 5000000000
+bit_flip surface 5 0.01 1000 100000000
+bit_flip surface 5 0.001 500 10000000000
+bit_flip surface 7 0.01 1000 500000000
+bit_flip surface 9 0.01 500 2000000000
+bit_flip asymmetric_toric 5 0.01 1000 200000000
+bit_flip asymmetric_toric 5 0.001 500 10000000000
+bit_flip asymmetric_toric 7 0.01 1000 1000000000
+bit_flip asymmetric_toric 9 0.01 500 2000000000
+bit_flip bb72 0 0.01 2000 1000000000
+bit_flip bb144 0 0.01 2000 500000000
