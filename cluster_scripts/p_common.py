@@ -17,7 +17,7 @@ def reorder_logicals(code, first_idx):
     """Return a CSSCode whose logical rows are permuted so row `first_idx` is first.
 
     run_rimc_mixed initialises every replica at lx[0], so this selects the
-    starting logical sector (same helper as general_code_audit / depol_audit).
+    starting logical sector (same helper as general_code_audit).
     """
     order = [first_idx] + [i for i in range(code.lx.shape[0]) if i != first_idx]
     return CSSCode(hx=code.hx, hz=code.hz,

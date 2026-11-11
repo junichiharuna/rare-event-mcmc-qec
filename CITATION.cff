@@ -2,9 +2,10 @@ cff-version: 1.2.0
 message: "If you use this code or data, please cite the paper and the Zenodo record of the version you used."
 type: software
 title: "rare-event-mcmc-qec: rare-event Markov chain Monte Carlo for logical error statistics of quantum codes"
-version: "1.0.0"
-date-released: "2026-10-26"
+version: "1.0.1"
+date-released: "2026-11-11"
 license: MIT
+doi: "10.5281/zenodo.23660599"
 repository-code: "https://github.com/junichiharuna/rare-event-mcmc-qec"
 authors:
   - family-names: Haruna
@@ -26,4 +27,5 @@ preferred-citation:
       given-names: Kotaro
       orcid: "https://orcid.org/0000-0001-8922-4411"
   year: 2026
-  status: in-preparation
+  status: preprint
+  url: "https://arxiv.org/abs/2610.35498"

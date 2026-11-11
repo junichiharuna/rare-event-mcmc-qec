@@ -9,7 +9,8 @@
   "license": "mit",
   "keywords": ["quantum error correction", "rare-event sampling", "Markov chain Monte Carlo", "splitting method", "logical error rate", "quantum LDPC codes"],
   "related_identifiers": [
+    {"identifier": "arXiv:2610.35498", "relation": "isSupplementTo", "resource_type": "publication-preprint", "scheme": "arxiv"},
     {"identifier": "https://github.com/junichiharuna/mcmc4qec", "relation": "isSupplementedBy", "resource_type": "software", "scheme": "url"}
   ],
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

@@ -112,10 +112,11 @@ WHERE (a)/(b) ACTUALLY DECIDE
      (a)+(b) instead and carry rhat_circular=True.
   2. Rows with NO Var[w|F] at all -- neither a reference nor a `w_var_within_mean`
      column. These cannot be certified and are always
-     flagged. (a)/(b) alone must never certify them: `p6_depol_bb144_burn.csv`
-     p=1e-3/minw/OBF has capped5=0 and n_used/tau=251, so it passes both, yet it
-     is +2.99 biased. Refusing to certify without an independent variance is the
-     whole point of the flag.
+     flagged. (a)/(b) alone must never certify them: in the June 2026 short
+     depolarizing run (8 chains x 2e5 steps, deleted on 2026-10-30) the BB144
+     p=1e-3/minw/OBF row had capped5=0 and n_used/tau=251, so it passed both, yet
+     it was +2.99 biased. Refusing to certify without an independent variance is
+     the whole point of the flag.
 
 TAU CONVENTION -- IMPORTANT
   src.metrics.iat() returns the Geyer-truncated tau_int = 1 + 2*sum_k rho_k, i.e.
@@ -408,10 +409,6 @@ DATASETS = [
          tables=("tab:rect",)),
     dict(name="zh_rerun", csv="zh_rerun_burn.csv", noise="bit_flip",
          tables=("tab:audit", "tab:lowp", "tab:ablation")),
-    dict(name="depol", csv="depol_audit_burn.csv", noise="depolarizing",
-         tables=("tab:depol",)),
-    dict(name="p6_depol", csv="p6_depol_bb144_burn.csv", noise="depolarizing",
-         tables=("tab:depollowp",)),
     # Emitted by cluster_scripts/lowp_audit.sh / lowp_bb144_long.sh; these carry the
     # per-chain checkpoint file, so the scaling criterion decides them. Absent files
     # are skipped silently.
@@ -436,6 +433,14 @@ DATASETS = [
     # schema as lowp_audit_gr; its reference is subset_sampling_depol.csv.
     dict(name="depol_meanw", csv="depol_meanw_2e6.csv", noise="depolarizing",
          tables=("tab:audit3", "tab:lowp"), key_d=False),
+    # cluster_scripts/depol_bb144_2e7_p1e2.sh / depol_bb144_2e7_lowp.sh (2026-10-30):
+    # BB144 under depolarizing noise at N=2e7, ten times the benchmark length, split
+    # by p over two nodes. Same driver, protocol, schema and reference as depol_meanw.
+    # These two files are the source of tab:depol.
+    dict(name="depol_bb144_2e7_p1e2", csv="depol_bb144_2e7_p1e2.csv",
+         noise="depolarizing", tables=("tab:depol",), key_d=False),
+    dict(name="depol_bb144_2e7_lowp", csv="depol_bb144_2e7_lowp.csv",
+         noise="depolarizing", tables=("tab:depol",), key_d=False),
 ]
 
 # Per-chain running-mean column in `<stem>_chains.csv`, best first. lowp_audit.py
@@ -526,9 +531,10 @@ def lookup_reference(refs, code: str, p: float, noise: str,
 def cond_key(row: dict, use_d: bool = True) -> tuple:
     """Condition identity shared by a run CSV and its `_conv` / `_chains` siblings.
 
-    `d` MUST be part of the key for depol_audit_burn.csv, which carries toric d=3
-    and d=5 under the same `code` value; a (code, p, init, method) key would
-    silently merge two different codes' convergence curves.
+    `d` MUST be part of the key for a CSV that carries two distances under the
+    same `code` value (the June 2026 depolarizing audit, since deleted, had toric
+    d=3 and d=5 that way); a (code, p, init, method) key would silently merge two
+    different codes' convergence curves.
 
     It must NOT be for the lowp_audit job: its `<stem>_chains.csv` has no `d`
     column at all (the code label there is already unique -- toric5 vs toric7 vs

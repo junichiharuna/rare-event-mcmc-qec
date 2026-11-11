@@ -7,7 +7,7 @@
 |---|---|---|---|
 | Table: mean-weight comparison at p=1e-4 | `paper/tables/meanw_table.tex` | `compare/build_audit_tables.py --paper-tables` | `lowp_audit_2e6_gr.csv`, `lowp_audit_2e6_k1.csv` (+ `_chains`, `_conv`, `_seeds`), reference `subset_sampling.csv` |
 | Table: BB codes in the rare-event regime | `paper/tables/lowp_table.tex` | same run | `lowp_audit_2e6_gr.csv` (+ companions), reference `subset_sampling.csv` |
-| Table: depolarizing test on BB[[144,12,12]] | `paper/tables/depol_table.tex` | same run | `depol_audit_burn.csv`, `p6_depol_bb144_burn.csv`, reference `subset_sampling_depol.csv` |
+| Table: depolarizing test on BB[[144,12,12]] | `paper/tables/depol_table.tex` | same run | `depol_bb144_2e7_p1e2.csv`, `depol_bb144_2e7_lowp.csv` (+ companions), reference `subset_sampling_depol.csv` |
 | Table: time to accuracy vs direct Monte Carlo | `paper/tables/dmc_speedup_table.tex` | `compare/analyze_dmc_speedup.py dmc_speedup_run{4..13}{,_bb108,_topo}.csv` | the 30 run files, references `subset_sampling.csv`, `direct_mc_ew.csv` |
 | Table: time to accuracy vs the one-bit-flip baseline | second table in the same `dmc_speedup_table.tex` | same run | same |
 | Table: cost of a full splitting estimate | `paper/tables/plcost_estimate_table.tex` | `compare/make_plcost_table.py` | `dmc_speedup_table.csv` (written by the previous step) |
@@ -22,8 +22,8 @@
 |---|---|---|
 | `lowp_audit_2e6_gr*.csv` | `cluster_scripts/lowp_audit_2e6_gr.sh` | `cluster_scripts/lowp_audit.py` |
 | `lowp_audit_2e6_k1*.csv` | `cluster_scripts/lowp_audit_k1.sh` | `cluster_scripts/lowp_audit.py` |
-| `depol_audit_burn.csv` | `cluster_scripts/depol_audit_burn.sh` | `cluster_scripts/depol_audit.py` |
-| `p6_depol_bb144_burn.csv` | `cluster_scripts/p6_depol_bb144_burn.sh` | `cluster_scripts/depol_audit.py` |
+| `depol_bb144_2e7_p1e2*.csv`, `depol_bb144_2e7_lowp*.csv` | `cluster_scripts/depol_bb144_2e7_p1e2.sh`, `depol_bb144_2e7_lowp.sh` | `cluster_scripts/lowp_audit.py --noise depolarizing` |
+| `depol_meanw_2e6*.csv` (benchmark-length depolarizing run, quoted in the appendix text) | `cluster_scripts/depol_meanw_2e6.sh` | `cluster_scripts/lowp_audit.py --noise depolarizing` |
 | `dmc_speedup_run*.csv` | `cluster_scripts/dmc_speedup10.sh`, `dmc_speedup_bb108.sh`, `dmc_speedup_topo.sh` | `cluster_scripts/dmc_speedup.py` |
 | `kernel_param_tta_run*.csv` | `cluster_scripts/kernel_param_tta.sh`, `kernel_param_tta_add.sh`, `kernel_param_tta_ext.sh` | `cluster_scripts/kernel_param_tta.py` |
 | `subset_sampling.csv`, `subset_sampling_depol.csv` (weight-stratified references) | `cluster_scripts/subset_sampling*.sh`; the p=1e-5 rows of toric and surface d=5, 7 were computed locally from the stored f_w table, without a job | `cluster_scripts/subset_sampling.py`; `compare/synth_subset_rows.py` for the computed rows |

@@ -4,8 +4,8 @@ runs with a bootstrap SE, against the weight-stratified reference.
 
 Outputs: five codes (surface:5, hgp_hamming, rect:3x11, bb144, bb_l9m6):
          cluster_results/kernel_param_tta_table.csv,
-         docs/figures/fig_pcluster_tta.png   (T_2% vs p_cluster, m=2),
-         paper/tables/clusterk_tta_table.tex (T_2% at m=2 and T(m)/T(m=2) for m=3,4,6 at p_cluster=0.3, p=TABLE_P,
+         docs/figures/fig_pcluster_tta.png   (relative T_2% vs p_cluster, m=2, two panels),
+         paper/tables/clusterk_tta_table.tex (T(m)/T(m=2) for m=3,4,6 at p_cluster=0.3, p=TABLE_P,
                                               rows whose m=2 arm reached the target only).
 Usage:   python compare/analyze_kernel_param_tta.py [--check-dmc] [cluster_results/kernel_param_tta_run*.csv]
 run{r}.csv, run{r}_ext.csv and run{r}_add.csv are concatenated into one run.
@@ -115,22 +115,21 @@ TABLE_P = 1e-4      # the error rate tab:clusterk shows
 
 
 def render_clusterk_tex(table, p=TABLE_P):
-    """T_2% at m=2 (core-seconds) and the relative time T(m)/T(m=2) for the other m, one
-    row per code at p_cluster=0.3 and error rate p. A code is emitted only when its m=2
-    arm reached the target, since a ratio of two lower bounds says nothing."""
+    """The relative time T(m)/T(m=2) for every m other than 2, one row per code at
+    p_cluster=0.3 and error rate p. A code is emitted only when its m=2 arm reached the
+    target, since a ratio of two lower bounds says nothing."""
     rows = [t for t in table if abs(t["p_cluster"] - 0.3) < 1e-12 and _near(t["p"], p)]
-    out = [r"\begin{tabular}{lcccc}", r"\toprule",
-           r"code & $T_{2\%}(m=2)$ & " + " & ".join(f"$m={k}$" for k in KS if k != 2) + r" \\",
+    others = [k for k in KS if k != 2]
+    out = [r"\begin{tabular}{l" + "c" * len(others) + "}", r"\toprule",
+           "code & " + " & ".join(f"$m={k}$" for k in others) + r" \\",
            r"\midrule"]
     for code in CODES:
         arm = {t["cluster_k"]: t for t in rows if t["code"] == code}
         ref = arm.get(2)
         if ref is None or not ref["reached_all"]:
             continue
-        cells = [_fmt(ref["t_mean"], False, se=ref["t_se"])]
-        for k in KS:
-            if k == 2:
-                continue
+        cells = []
+        for k in others:
             t = arm.get(k)
             if t is None:
                 cells.append("--")
@@ -150,14 +149,10 @@ def _select_arm_points(table, code, p, k):
                   if t["code"] == code and _near(t["p"], p) and t["cluster_k"] == k)
 
 
-CELL_FS = 7        # cell-label font size
-REL_MAX = 30.0      # top of the colour scale; a value above it is drawn at the top colour
-
-
 def _rel_times(table, code, p):
     """Per p_cluster of one (code, p, m=2) curve: (p_cluster, ratio, ratio_se, reached) with
     ratio = T_2% / smallest reached T_2% of the curve (all values if none reached) and
-    ratio_se the SEs of both times in quadrature (0 for the reference cell itself); [] if no arm."""
+    ratio_se the SEs of both times in quadrature (0 for the reference point itself); [] if no arm."""
     pts = _select_arm_points(table, code, p, 2)
     if not pts:
         return []
@@ -172,79 +167,81 @@ def _rel_times(table, code, p):
     return out
 
 
-def _fmt_rel(r, reached, se=0.0):
-    """Cell label: value(SE) under the PDG rule for a measured ratio with an SE, else
-    two significant figures, with a leading >= on a lower bound."""
-    if reached and se is not None and np.isfinite(se) and se > 0:
-        return _val_unc(r, se)
-    if reached and r == 1.0:
-        return "1"                      # the reference cell of its row
-    txt = f"{r:.1f}" if r < 10 else f"{r:.0f}"
-    return txt if reached else "\u2265" + txt
-
-
 FIG_ROWS = [(c, 1e-4) for c in CODES]
+PC_MAIN = 0.3       # the cluster-exchange probability of the main text, marked by a dotted line
+STYLE = {"surface:5": ("C0", "o"), "hgp_hamming": ("C1", "s"), "rect:3x11": ("C2", "^"),
+         "bb144": ("C3", "D"), "bb_l9m6": ("C4", "v")}        # (colour, marker) per code
+LB_DODGE = 0.02     # horizontal step between lower bounds that share a p_cluster
+LB_TOP = 1e9        # the half-line of a lower bound runs up to here, beyond the axis
+PANELS = [("(a) codes without the trapping", ["surface:5", "hgp_hamming"]),
+          ("(b) broad-spread codes", ["rect:3x11", "bb144", "bb_l9m6"])]
 
 
 def plot_pcluster(table, path, rows=FIG_ROWS):
-    """Write the p_cluster figure (m=2) as one small grid: a row per (code, p) in `rows`
-    (default FIG_ROWS: every code at p=1e-4), a column per p_cluster in
-    PCS, each cell coloured and labelled by T_2% relative to the smallest reached T_2% of
-    its row. A lower bound (a run did not reach the target) is hatched and labelled with >=.
-    The default column 0.3 is outlined. Returns (fig, ax) with fig already closed."""
+    """Write the p_cluster figure (m=2) with one panel per group of PANELS that has a
+    (code, p) in `rows` (default FIG_ROWS: every code at p=1e-4), and in it a curve per
+    (code, p), each with its own colour and marker: T_2% relative to the smallest reached
+    T_2% of the curve versus p_cluster, on a logarithmic axis, with the SE of the ratio as
+    error bars. A lower bound (a run did not reach the target) is an open marker with a
+    half-line upward (as in fig:intro), joined to the curve by a dashed line. A dotted line marks
+    p_cluster = PC_MAIN. Returns (fig, axes) with fig already closed."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.colors import LogNorm
-    from matplotlib.patches import Rectangle
-    ncol = len(PCS)
-    grid = np.full((len(rows), ncol), np.nan)
-    reached = np.ones((len(rows), ncol), dtype=bool)
-    sematrix = np.zeros((len(rows), ncol))
-    for i, (c, p) in enumerate(rows):
-        for x, r, se, ok in _rel_times(table, c, p):
-            j = PCS.index(x)
-            grid[i, j] = r
-            reached[i, j] = ok
-            sematrix[i, j] = se
-    fig, ax = plt.subplots(figsize=(6.0, 0.34 * len(rows) + 0.55))   # full width: value(SE) labels
-    cmap = plt.get_cmap("YlOrRd").copy()
-    cmap.set_bad("0.92")
-    ax.imshow(np.clip(grid, 1.0, REL_MAX), cmap=cmap, norm=LogNorm(1.0, REL_MAX), aspect="auto")
-    for i in range(len(rows)):
-        for j in range(ncol):
-            if np.isnan(grid[i, j]):
-                continue
-            r = grid[i, j]
-            if not reached[i, j]:
-                ax.add_patch(Rectangle((j - 0.5, i - 0.5), 1, 1, fill=False, hatch="//",
-                                       edgecolor="0.35", lw=0))
-            dark = r > 4.0 and reached[i, j]
-            ax.text(j, i, _fmt_rel(r, reached[i, j], sematrix[i, j]), ha="center", va="center", fontsize=CELL_FS,
-                    color="white" if dark else "black",
-                    bbox=None if reached[i, j] else dict(facecolor="white", alpha=0.85, lw=0, pad=1.2))
-    j3 = PCS.index(0.3)
-    ax.add_patch(Rectangle((j3 - 0.5, -0.5), 1, len(rows), fill=False, edgecolor="black",
-                           lw=1.5))
-    for k in range(1, len(rows)):
-        if rows[k][0] != rows[k - 1][0]:
-            ax.axhline(k - 0.5, color="black", lw=0.6)
-    ax.set_xticks(range(ncol))
-    ax.set_xticklabels([f"{x:g}" for x in PCS], fontsize=7)
-    ax.set_xlabel(r"$p_{\mathrm{cluster}}$", fontsize=8)
-    ax.xaxis.set_label_position("top")
-    ax.xaxis.tick_top()
-    ax.set_yticks(range(len(rows)))
-    one_p = len({p for _, p in rows}) == 1          # p goes to the caption, not the labels
-    ax.set_yticklabels([LABEL[c] if one_p else rf"{LABEL[c]}, $p=10^{{{int(round(np.log10(p)))}}}$"
-                        for c, p in rows], fontsize=7)
-    ax.tick_params(length=0, pad=2)
-    for sp in ax.spines.values():
-        sp.set_visible(False)
-    fig.tight_layout(pad=0.3)
+    plt.rcParams.update({"font.size": 9, "axes.titlesize": 9, "axes.labelsize": 9.5,
+                         "xtick.labelsize": 9, "ytick.labelsize": 9})
+    panels = [(title, [(c, p) for c, p in rows if c in codes]) for title, codes in PANELS]
+    panels = [(title, prows) for title, prows in panels if prows]
+    fig, axes = plt.subplots(1, len(panels), figsize=(3.5 * len(panels), 2.5), squeeze=False)
+    axes = axes[0]
+    one_p = len({p for _, p in rows}) == 1          # p goes to the caption, not the legend
+    for ax, (title, prows) in zip(axes, panels):
+        top = 1.0
+        ax.axvline(PC_MAIN, color="0.6", ls=":", lw=0.8, zorder=1)
+        dodge = {}                                   # p_cluster -> codes with a lower bound there
+        for c, p in prows:
+            for x, _, _, o in _rel_times(table, c, p):
+                if not o:
+                    dodge.setdefault(x, []).append(c)
+        for c, p in prows:
+            color, marker = STYLE[c]
+            label = LABEL[c] if one_p else rf"{LABEL[c]}, $p=10^{{{int(round(np.log10(p)))}}}$"
+            pts = _rel_times(table, c, p)
+            ok = [(x, r, se) for x, r, se, o in pts if o]
+            lb = [(x, r) for x, r, _, o in pts if not o]
+            if ok:
+                xs, rs, ses = zip(*ok)
+                ax.errorbar(xs, rs, yerr=ses, fmt=marker + "-", color=color, ms=3.5, lw=1.0,
+                            elinewidth=0.8, capsize=1.5, zorder=3, label=label)
+            def xd(x, o):                            # lower bounds at one x sit side by side
+                return x if o else x + LB_DODGE * (dodge[x].index(c) - (len(dodge[x]) - 1) / 2)
+            if pts and lb:                           # dashed guide through the lower bounds
+                ax.plot([xd(x, o) for x, _, _, o in pts], [r for _, r, _, _ in pts], "--",
+                        color=color, lw=0.7, alpha=0.6, zorder=2)
+            for x, r in lb:                          # open marker and a half-line upward
+                ax.plot([xd(x, False)] * 2, [r, LB_TOP], color=color, lw=1.4, alpha=0.3,
+                        solid_capstyle="butt", zorder=2)
+                ax.plot([xd(x, False)], [r], marker, color=color, mfc="white", ms=3.5,
+                        zorder=4, label=None if ok else label)
+            top = max([top] + [r for _, r, _, _ in pts])
+        ax.set_yscale("log")
+        ax.set_ylim(0.8, 2.5 * top)
+        ax.set_xlim(-0.05, 0.95)
+        ax.set_xticks(PCS)
+        ax.set_xticklabels([f"{x:g}" for x in PCS])
+        ax.set_xlabel(r"$p_{\mathrm{cluster}}$")
+        ax.set_title(title)
+        ax.grid(True, which="major", alpha=0.3, lw=0.5)       # as in fig:intro
+        ax.grid(True, axis="y", which="minor", alpha=0.15, lw=0.4)
+        ax.set_axisbelow(True)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+        ax.legend(fontsize=8.5, loc="upper right", frameon=False, handletextpad=0.4)
+    axes[0].set_ylabel(r"relative $T_{2\%}$")
+    fig.tight_layout(pad=0.3, w_pad=1.2)
     fig.savefig(path, dpi=300)
     plt.close(fig)
-    return fig, ax
+    return fig, axes
 
 
 def cross_check_dmc(run_rows, dmc_rows):

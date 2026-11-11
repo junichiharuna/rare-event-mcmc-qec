@@ -204,23 +204,33 @@ def build_lowp(idx, args) -> str:
     return "\n".join(out) + "\n"
 
 
-# Since 2026-10-03 the paper's single depolarizing table (tab:depol) is BB144 only:
-# the p=1e-2 rows come from depol_audit_burn.csv (50 chains, N=1e5), the lower
-# rows from p6_depol_bb144_burn.csv (8 chains, N=2e5). The other codes of
-# depol_audit_burn.csv (toric d=3,5; bb72) are no longer printed.
-DEPOL_ROWS = [(1e-2, r"10^{-2}       ", "depol"),
-              (3e-3, r"3\times10^{-3}", "p6_depol"),
-              (1e-3, r"10^{-3}       ", "p6_depol")]
+# Since 2026-10-30 the paper's single depolarizing table (tab:depol) is built from the
+# N=2e7 depolarizing jobs (cluster_scripts/depol_bb144_2e7_p1e2.sh for p=1e-2 and
+# depol_bb144_2e7_lowp.sh for p=1e-3, 1e-4, jobs 265968 / 265967): the protocol of
+# tab:meanw / tab:lowp (K=50, both initializations, per-chain checkpoints, so the
+# primary convergence rule applies) with chains ten times longer, BB144 only, at the
+# three error rates of tab:lowp, against the weight-stratified reference of
+# subset_sampling_depol.csv. The benchmark-length run at N=2e6
+# (depol_meanw_2e6.csv, builders tab_depol_meanw / tab_depol_lowp below) is quoted in
+# the appendix text only. The older short runs of June 2026 (depol_audit_burn.csv,
+# p6_depol_bb144_burn.csv, driver depol_audit.py) were deleted on 2026-10-30; recover
+# them from the git history before that date if ever needed.
+DEPOL_ROWS = [(1e-2, r"10^{-2}", "depol_bb144_2e7_p1e2"),
+              (1e-3, r"10^{-3}", "depol_bb144_2e7_lowp"),
+              (1e-4, r"10^{-4}", "depol_bb144_2e7_lowp")]
+DEPOL_2E7_NOTE = ("; all rows from cluster_results/depol_bb144_2e7_p1e2.csv (p=1e-2) and "
+                  "depol_bb144_2e7_lowp.csv (p=1e-3, 1e-4) (depolarizing noise, K=50, "
+                  "N=2e7); truth = weight-stratified reference of subset_sampling_depol.csv")
 
 
 def build_depol(idx, args) -> str:
-    out = [header(args)]
+    out = [header(args, extra=DEPOL_2E7_NOTE, primary=True)]
     for p, ptex, dataset in DEPOL_ROWS:
-        for j, (tag, init) in enumerate((("long ", "maxw"), ("short", "minw"))):
+        for j, (tag, init) in enumerate((("short", "short"), ("long ", "long"))):
             obf = get(idx, dataset, "bb144", "0", p, init, "OBF")
             zh = get(idx, dataset, "bb144", "0", p, init, "Z+H")
             lead = ("$%s$ & %s" % (ptex, truth_cell(obf["truth"], obf["truth_se"]))
-                    if j == 0 else "                 &            ")
+                    if j == 0 else "          &             ")
             out.append("%s & %s & %s & %s \\\\"
                        % (lead, tag,
                           cell(obf["bias"], obf["bias_se"], obf["converged"],

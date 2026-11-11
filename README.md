@@ -2,7 +2,7 @@
 
 Code, cluster job scripts, simulation outputs, and reference estimates for
 
-> Junichi Haruna and Kotaro Murakami, *Fast and accurate rare-event simulation by Markov chain Monte Carlo for general quantum codes* (2026).
+> Junichi Haruna and Kotaro Murakami, *Fast and accurate rare-event simulation by Markov chain Monte Carlo for general quantum codes*, [arXiv:2610.35498](https://arxiv.org/abs/2610.35498) (2026).
 
 The splitting method estimates logical error rates of quantum error-correcting codes deep in the rare-event regime, where direct Monte Carlo sampling is prohibitively expensive.
 It relies on a Markov chain Monte Carlo (MCMC) sampler of faulty configurations, usually driven by one-bit-flip proposals, which have been reported to be trapped on some codes.
@@ -26,9 +26,12 @@ This repository holds everything behind the paper's numbers:
 Python 3.11.
 
 ```
-pip install -r requirements.txt        # or requirements-lock.txt for the exact versions we used
+pip install -r requirements.txt        # or requirements-lock.txt for the versions of the simulations
 python -m pytest tests -q -n auto      # about two minutes
 ```
+
+`requirements-lock.txt` lists the versions in the Python environment of the cluster that ran the simulations.
+The test suite and `python reproduce.py --check` also pass with newer releases of these packages.
 
 ## Reproduce the tables and figures
 
@@ -46,10 +49,16 @@ The job scripts in `cluster_scripts/*.sh` were written for a PBS cluster (mostly
 They are provided as the record of how the data were produced.
 Most have a `*_smoke.sh` variant that runs a reduced configuration.
 
+## Related software
+
+The sampler of this repository is also available as a standalone Python package, [mcmc4qec](https://github.com/junichiharuna/mcmc4qec), for estimating logical error rates with other codes and decoders.
+This repository stays the frozen record of the paper, while new development happens there.
+
 ## Citation
 
 See `CITATION.cff`.
-Every release of this repository is archived on Zenodo; cite the DOI of the version you used.
+Every release of this repository is archived on Zenodo under the concept DOI [10.5281/zenodo.23660599](https://doi.org/10.5281/zenodo.23660599), which always resolves to the latest version.
+Please cite the DOI of the version you used.
 
 ## License
 

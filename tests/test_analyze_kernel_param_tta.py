@@ -78,7 +78,7 @@ def test_table_rows_and_tex_ratios():
     assert by[("bb144", 1e-3, 0.3, 2)]["reached_all"] is True
     assert by[("bb144", 1e-3, 0.3, 3)]["reached_all"] is False
     tex = A.render_clusterk_tex(table, p=1e-3)
-    # m=2 reached: the row is emitted with its absolute time and the m=3 arm as a ratio lower bound
+    # m=2 reached: the row is emitted with the m=3 arm as a ratio lower bound
     assert r"\geq" in tex and r"\mathbf" not in tex and "BB $[[144,12,12]]$" in tex
     # the other four codes emit no row: no stacked rules
     lines = tex.splitlines()
@@ -202,14 +202,24 @@ def test_plot_pcluster_looks_up_p_with_tolerance(tmp_path):
     assert rel[0][2] == 0.0                                             # the reference cell has no SE
     assert abs(rel[1][2] - 1.01 * (0.1 ** 2 / 1.01 ** 2 + 0.1 ** 2) ** 0.5) < 1e-12
     out = tmp_path / "f.png"
-    fig, ax = A.plot_pcluster(table, str(out), rows=[("bb144", 1e-3)])
+    fig, axes = A.plot_pcluster(table, str(out), rows=[("bb144", 1e-3)])
     assert out.stat().st_size > 0
-    texts = [t.get_text() for t in ax.texts]
-    assert len(texts) == len(A.PCS)                                     # one labelled cell per arm of the one row
-    assert sum(t.startswith("≥") for t in texts) == sum(pc >= 0.5 for pc in A.PCS)
-    assert A._fmt_rel(1.234, True) == "1.2" and A._fmt_rel(12.3, False) == "≥12"
-    assert A._fmt_rel(1.234, True, 0.14) == "1.23(14)" and A._fmt_rel(12.3, False, 2.0) == "≥12"
-    assert texts[0] == "1" and texts[1] == "1.01(14)"                # reference cell, then value(SE)
+    assert len(axes) == 1                                               # only the panel that has a row
+    ax = axes[0]
+    assert ax.get_yscale() == "log" and ax.get_title() == A.PANELS[1][0]
+    n_lb = sum(pc >= 0.5 for pc in A.PCS)
+    assert len(ax.containers) == 1                                      # the joined reached points
+    reached_line = ax.containers[0].lines[0]
+    assert list(reached_line.get_xdata()) == [pc for pc in A.PCS if pc < 0.5]
+    assert reached_line.get_ydata()[0] == 1.0                            # the reference point
+    # a lower bound is an open marker with a half-line that leaves the axis at the top
+    opens = [ln for ln in ax.lines if ln.get_markerfacecolor() == "white"]
+    rays = [ln for ln in ax.lines if list(ln.get_ydata())[-1] == A.LB_TOP]
+    assert len(opens) == n_lb and len(rays) == n_lb
+    assert sorted(ln.get_xdata()[0] for ln in opens) == [pc for pc in A.PCS if pc >= 0.5]   # one code: no dodge
+    assert ax.get_ylim()[1] < A.LB_TOP
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert labels == [A.LABEL["bb144"]]                                 # one p, so no p in the legend
 
 
 def test_codes_order_and_labels():
@@ -239,13 +249,20 @@ def test_plot_pcluster_default_rows(tmp_path):
     table = [dict(code=c, p=p, p_cluster=pc, cluster_k=2, n_runs=2, t_mean=10.0 + pc,
                   t_se=1.0, reached_all=True, truth=3.0, truth_se=0.0)
              for c in A.CODES for p in A.PS for pc in A.PCS]
-    fig, ax = A.plot_pcluster(table, str(tmp_path / "f.png"))
+    fig, axes = A.plot_pcluster(table, str(tmp_path / "f.png"))
     assert A.FIG_ROWS == [(c, 1e-4) for c in A.CODES]
-    labels = [t.get_text() for t in ax.get_yticklabels()]
-    assert len(labels) == len(A.FIG_ROWS)
-    assert labels == [A.LABEL[c] for c, _ in A.FIG_ROWS]          # one p, so no p in the labels
-    assert len(ax.texts) == len(A.FIG_ROWS) * len(A.PCS)
-    assert [t.get_text() for t in ax.get_xticklabels()] == [f"{x:g}" for x in A.PCS]
+    assert set(A.STYLE) == set(A.CODES) and len(set(A.STYLE.values())) == len(A.CODES)
+    assert [c for _, codes in A.PANELS for c in codes] == A.CODES  # every code sits in one panel
+    assert len(axes) == len(A.PANELS)
+    for ax, (title, codes) in zip(axes, A.PANELS):
+        assert ax.get_title() == title
+        assert len(ax.containers) == len(codes)                    # one curve per code, no lower bound
+        for cont, c in zip(ax.containers, codes):
+            line = cont.lines[0]
+            assert list(line.get_xdata()) == A.PCS
+            assert (line.get_color(), line.get_marker()) == A.STYLE[c]
+        assert [t.get_text() for t in ax.get_legend().get_texts()] == [A.LABEL[c] for c in codes]
+        assert [t.get_text() for t in ax.get_xticklabels()] == [f"{x:g}" for x in A.PCS]
 
 
 def test_tex_first_block_is_surface5():

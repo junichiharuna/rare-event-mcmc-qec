@@ -1,10 +1,13 @@
-numpy==2.4.6
-pymatching==2.4.0
-ldpc==2.4.1
+# Versions in the conda environment (Python 3.11.9) of the cluster that ran the
+# simulations, as read from that environment on 2026-11-11.
+numpy==1.26.4
+pymatching==2.2.1
+ldpc==2.3.9
 bposd==2.1
-scipy==1.17.1
-matplotlib==3.11.0
+scipy==1.16.2
+matplotlib==3.9.2
 pandas==3.0.3
 pymbar==4.0.3
-pytest==9.1.1
+pytest==8.4.2
+# pytest-xdist is not installed on the cluster. It only runs the tests in parallel.
 pytest-xdist==3.8.0
